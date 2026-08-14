@@ -1,0 +1,16 @@
+{
+  "name": "Natural Cosmetics Inventory",
+  "short_name": "NC Inventory",
+  "description": "Offline-first inventory management for natural cosmetics and Moroccan beauty products.",
+  "start_url": "./index.html#/dashboard",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f7fa",
+  "theme_color": "#0f766e",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "./assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
