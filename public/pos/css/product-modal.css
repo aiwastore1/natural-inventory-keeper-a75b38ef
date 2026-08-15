@@ -10,6 +10,8 @@
 .dyn-row .input { flex: 1; }
 .margin-bar { display: flex; gap: 6px; flex-wrap: wrap; }
 .img-prev { height: 72px; border-radius: 10px; margin-top: 8px; }
+.file-upload { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.file-upload .btn { margin: 0; }
 .switch-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .switch input { width: 44px; height: 24px; }
 .muted-block { opacity: 0.45; pointer-events: none; }

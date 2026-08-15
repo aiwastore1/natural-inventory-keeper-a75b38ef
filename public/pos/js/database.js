@@ -1,9 +1,9 @@
 /**
- * IndexedDB access layer for MasterPosInventoryDB.
+ * IndexedDB access layer for NaturalCosmeticsDB.
  * Generic, reusable CRUD + transaction helpers. No LocalStorage as primary store.
  */
 
-export const DB_NAME = "MasterPosInventoryDB";
+export const DB_NAME = "NaturalCosmeticsDB";
 export const DB_VERSION = 2;
 
 export const STORES = {
@@ -204,6 +204,13 @@ export const db = {
         for (const row of rows) await wrap(s[name].put(row));
       }
       return true;
+    });
+  },
+  async replaceStore(store, rows) {
+    return tx(store, "readwrite", async (s) => {
+      await wrap(s[store].clear());
+      for (const row of rows) await wrap(s[store].put(row));
+      return rows.length;
     });
   },
 };

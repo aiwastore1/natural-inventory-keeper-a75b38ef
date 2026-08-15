@@ -5,7 +5,7 @@
  * contextBridge API exposed in preload. In a plain browser it degrades to a
  * read-only status panel.
  */
-import { db, uid } from "../database.js";
+import { db, uid, STORES } from "../database.js";
 import { get, reload, state, saveSetting } from "../state.js";
 import { t } from "../i18n.js";
 import { esc, fmtDateTime, num } from "../utils/format.js";
@@ -20,6 +20,17 @@ export function isDesktop() {
 let statusCache = { role: "offline", peers: [], connected: false };
 let listenerBound = false;
 
+function logSync(direction, store, recordId, peer) {
+  return db.put("syncLog", {
+    id: uid("syn"),
+    direction,
+    store,
+    recordId,
+    peer: peer || "?",
+    createdAt: new Date().toISOString(),
+  });
+}
+
 /** Send a local change to peers (no-op in browser). */
 export function broadcastChange(store, record) {
   const api = bridge();
@@ -31,10 +42,84 @@ export function broadcastChange(store, record) {
   }
 }
 
+/**
+ * Send store->records map to peers so compound operations (sales, returns,
+ * product edits) keep stock/batches/inventory consistent on every machine.
+ * The receiving side upserts the records (safe merge, no deletions).
+ */
+export function broadcastSync(map) {
+  const api = bridge();
+  if (!api) return;
+  const stores = {};
+  for (const [name, rows] of Object.entries(map)) {
+    const list = Array.isArray(rows) ? rows.filter(Boolean) : [];
+    if (list.length) stores[name] = list.map((r) => ({ ...r }));
+  }
+  if (!Object.keys(stores).length) return;
+  try {
+    api.send({ kind: "state", at: new Date().toISOString(), origin: state.settings.deviceName || "device", stores });
+  } catch {
+    /* peer offline */
+  }
+}
+
+/** Full snapshot of every store except device-local ones (settings, syncLog). */
+function fullState() {
+  const stores = {};
+  for (const [name, rows] of Object.entries(state.data)) {
+    if (name === "settings" || name === "syncLog") continue;
+    if (Array.isArray(rows) && rows.length) stores[name] = rows.map((r) => ({ ...r }));
+  }
+  return stores;
+}
+
+function isSyncableStore(name) {
+  return Boolean(STORES[name]) && name !== "settings" && name !== "syncLog";
+}
+
 async function applyRemote(message) {
+  if (!message || typeof message !== "object") return;
+  const origin = message.origin || "?";
+  const api = bridge();
+
+  if (message.kind === "snapshot_request") {
+    if (!api) return;
+    api.send({ kind: "snapshot", at: new Date().toISOString(), origin: state.settings.deviceName || "device", stores: fullState() });
+    return;
+  }
+
+  if (message.kind === "snapshot" && message.stores) {
+    const names = Object.keys(message.stores).filter((n) => isSyncableStore(n));
+    if (!names.length) return;
+    for (const name of names) {
+      const rows = message.stores[name];
+      if (!Array.isArray(rows)) continue;
+      await db.replaceStore(name, rows);
+    }
+    await logSync("in", "snapshot", names.join(","), origin);
+    await reload([...names, "syncLog"]);
+    UI.toast(`${t("sync_received")}: ${names.length} ${t("store")}(s)`);
+    return;
+  }
+
+  if (message.kind === "state" && message.stores) {
+    const names = Object.keys(message.stores).filter((n) => isSyncableStore(n));
+    if (!names.length) return;
+    for (const name of names) {
+      const rows = message.stores[name];
+      if (!Array.isArray(rows) || !rows.length) continue;
+      await db.bulkInsert(name, rows);
+    }
+    await logSync("in", "state", names.join(","), origin);
+    await reload([...names, "syncLog"]);
+    UI.toast(`${t("sync_received")}: ${names.join(", ")}`);
+    return;
+  }
+
   if (message.kind !== "change" || !message.store || !message.record) return;
+  if (!isSyncableStore(message.store)) return;
   await db.put(message.store, message.record);
-  await db.put("syncLog", { id: uid("syn"), direction: "in", store: message.store, recordId: message.record.id, peer: message.origin || "?", createdAt: new Date().toISOString() });
+  await logSync("in", message.store, message.record.id, origin);
   await reload([message.store, "syncLog"]);
   UI.toast(`${t("sync_received")}: ${message.store}`);
 }
@@ -43,9 +128,18 @@ export function initSync() {
   const api = bridge();
   if (!api || listenerBound) return;
   listenerBound = true;
-  api.onMessage((msg) => applyRemote(msg).catch(() => {}));
+  api.onMessage((msg) => applyRemote(msg).catch((e) => console.error("sync", e)));
   api.onStatus((status) => {
+    const was = statusCache.role;
     statusCache = { ...statusCache, ...status };
+    // Client asks the master for a full snapshot as soon as the link is up.
+    if (statusCache.role === "client" && was !== "client") {
+      try {
+        api.send({ kind: "snapshot_request", origin: state.settings.deviceName || "device" });
+      } catch {
+        /* not ready yet */
+      }
+    }
   });
   api.getStatus?.().then((s) => {
     if (s) statusCache = { ...statusCache, ...s };

@@ -8,7 +8,7 @@ import { t, localName } from "../i18n.js";
 import { money, num, esc, fmtDateTime, debounce } from "../utils/format.js";
 import * as UI from "../components/ui.js";
 import { createSale, applyStockChange, productBatches, expiryStatus, EXPIRY_META, nextInvoiceNumber } from "./domain.js";
-import { broadcastChange } from "./network.js";
+import { broadcastSync } from "./network.js";
 
 const cart = { lines: [], customerId: null, returnMode: false, discount: 0, note: "" };
 let renderRoot = null;
@@ -135,7 +135,15 @@ async function confirmSale() {
       await db.put("returns", record);
       await logActivity("RETURN", "return", `${returnNumber} — ${money(record.refundTotal)}`);
       await reload(["returns", "activityLog"]);
-      broadcastChange("returns", record);
+      const affected = new Set(cart.lines.map((l) => l.productId));
+      broadcastSync({
+        returns: [record],
+        products: get("products").filter((p) => affected.has(p.id)),
+        batches: get("batches").filter((b) => affected.has(b.productId)),
+        inventory: get("inventory").filter((i) => affected.has(i.productId)),
+        stockMovements: get("stockMovements").filter((m) => affected.has(m.productId)),
+        notifications: get("notifications").filter((n) => affected.has(n.meta?.productId)),
+      });
       UI.toast(`${t("refund_done")} — ${returnNumber}`);
       if (state.settings.autoPrint) printReceipt({ title: t("return_receipt"), number: returnNumber, lines: cart.lines, sums, kind: "return", customerName: byId("customers", cart.customerId)?.name });
     } else {
@@ -148,7 +156,16 @@ async function confirmSale() {
         paymentStatus: "paid",
         notes: cart.note,
       });
-      broadcastChange("sales", sale);
+      const affected = new Set(cart.lines.map((l) => l.productId));
+      broadcastSync({
+        sales: [sale],
+        saleItems: get("saleItems").filter((i) => i.saleId === sale.id),
+        products: get("products").filter((p) => affected.has(p.id)),
+        batches: get("batches").filter((b) => affected.has(b.productId)),
+        inventory: get("inventory").filter((i) => affected.has(i.productId)),
+        stockMovements: get("stockMovements").filter((m) => affected.has(m.productId)),
+        notifications: get("notifications").filter((n) => affected.has(n.meta?.productId)),
+      });
       UI.toast(`${t("sale_done")} — ${sale.invoiceNumber}`);
       if (state.settings.autoPrint) printReceipt({ title: t("invoice"), number: sale.invoiceNumber, lines: cart.lines, sums, kind: "sale", customerName: byId("customers", cart.customerId)?.name });
     }
@@ -166,7 +183,7 @@ async function holdCart() {
   const record = { id: uid("hld"), lines: [...cart.lines], customerId: cart.customerId, discount: cart.discount, total: totals().total, createdAt: new Date().toISOString() };
   await db.put("holds", record);
   await reload("holds");
-  broadcastChange("holds", record);
+  broadcastSync({ holds: [record] });
   cart.lines = [];
   cart.discount = 0;
   UI.toast(t("held"));
@@ -189,7 +206,7 @@ async function saveDraft(type) {
   };
   await db.put("drafts", record);
   await reload("drafts");
-  broadcastChange("drafts", record);
+  broadcastSync({ drafts: [record] });
   UI.toast(`${type === "order" ? t("order") : t("proforma")} — ${number}`);
   printReceipt({ title: type === "order" ? t("order") : t("proforma"), number, lines: cart.lines, sums: totals(), kind: type, customerName: byId("customers", cart.customerId)?.name });
   rerender();
@@ -296,6 +313,7 @@ export async function pos(route, view) {
 
   function render() {
     const sums = totals();
+    const customerName = byId("customers", cart.customerId)?.name || "";
     view.innerHTML = `
       <div class="pos-wrap ${cart.returnMode ? "return-mode" : ""}">
         <div class="pos-top">
@@ -308,7 +326,10 @@ export async function pos(route, view) {
           <section class="pos-products">${productCards()}</section>
           <aside class="pos-cart">
             <div class="pos-cart-head">
-              <select class="select" id="pos-customer"><option value="">${t("walk_in")}</option>${UI.selectOptions(get("customers"), "id", (c) => c.name, cart.customerId)}</select>
+              <div class="pos-customer">
+                <input class="input pos-customer-input" id="pos-customer-search" value="${esc(customerName)}" placeholder="${esc(t("customer_search"))}" autocomplete="off" role="combobox" aria-expanded="false" aria-label="${esc(t("customer"))}">
+                <div class="pos-customer-results" id="pos-customer-results"></div>
+              </div>
               <span class="badge">${num(sums.count)} ${t("items")}</span>
             </div>
             <div class="pos-lines">${cartRows()}</div>
@@ -362,8 +383,42 @@ export async function pos(route, view) {
       cart.returnMode = !cart.returnMode;
       render();
     });
-    view.querySelector("#pos-customer").addEventListener("change", (e) => {
-      cart.customerId = e.target.value || null;
+    const custInput = view.querySelector("#pos-customer-search");
+    const custResults = view.querySelector("#pos-customer-results");
+    const renderCustResults = () => {
+      const q = custInput.value.trim().toLowerCase();
+      const matches = get("customers")
+        .filter((c) => !q || String(c.name || "").toLowerCase().includes(q) || String(c.phone || "").includes(q))
+        .slice(0, 8);
+      const html = q
+        ? matches.length
+          ? matches.map((c) => `<button class="res-item" type="button" data-cust="${c.id}"><span>${esc(c.name)}</span><span class="stat-hint">${esc(c.phone || "")}</span></button>`).join("")
+          : `<div class="res-group">${t("not_found")}</div>`
+        : `<button class="res-item" type="button" data-cust="">${esc(t("walk_in"))}</button>`;
+      custResults.innerHTML = html;
+      custResults.classList.add("show");
+      custInput.setAttribute("aria-expanded", "true");
+      custResults.querySelectorAll("[data-cust]").forEach((b) =>
+        b.addEventListener("click", () => {
+          const cid = b.dataset.cust;
+          cart.customerId = cid || null;
+          custInput.value = cid ? (byId("customers", cid)?.name || "") : "";
+          hideCustResults();
+        }),
+      );
+    };
+    const hideCustResults = () => {
+      custResults.classList.remove("show");
+      custInput.setAttribute("aria-expanded", "false");
+    };
+    custInput.addEventListener("focus", renderCustResults);
+    custInput.addEventListener("input", renderCustResults);
+    custInput.addEventListener("blur", () => setTimeout(hideCustResults, 180));
+    custInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const first = custResults.querySelector("[data-cust]");
+      if (first) first.click();
     });
     view.querySelector("#pos-discount").addEventListener("change", (e) => {
       cart.discount = Number(e.target.value) || 0;

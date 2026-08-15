@@ -18,6 +18,11 @@
 .pos-batch.danger { background: #fee2e2; color: #991b1b; }
 .pos-cart { position: sticky; top: 8px; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
 .pos-cart-head { display: flex; gap: 8px; align-items: center; }
+.pos-customer { position: relative; flex: 1; min-width: 160px; }
+.pos-customer-input { width: 100%; }
+.pos-customer-results { position: absolute; top: calc(100% + 4px); inset-inline-start: 0; inset-inline-end: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); padding: 4px; z-index: 40; display: none; max-height: 40vh; overflow-y: auto; }
+.pos-customer-results.show { display: block; }
+.pos-customer-results .stat-hint { color: var(--text-muted); font-size: 11px; }
 .pos-lines { max-height: 40vh; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
 .pos-line { display: grid; grid-template-columns: 1fr auto 82px auto auto; gap: 6px; align-items: center; padding: 6px; border-radius: 10px; background: var(--surface-2, #f8fafc); }
 .pos-line-main { min-width: 0; display: flex; flex-direction: column; }

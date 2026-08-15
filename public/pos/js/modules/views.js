@@ -144,6 +144,7 @@ export async function dashboard(route, view) {
 
 /* -------------------------------- Products -------------------------------- */
 export async function products(route, view) {
+  if (route.param === "new") return openProductModal(null, () => navigate("/products"));
   if (route.param) return productDetails(route.param, view);
   const c = ctrl("products", { sort: "sku", perPage: 10, category: "", status: "" });
   const render = () => {
@@ -226,9 +227,19 @@ export async function products(route, view) {
     view.querySelectorAll("[data-del]").forEach((b) =>
       b.addEventListener("click", async () => {
         if (!(await UI.confirmDialog({ message: t("delete_warning") }))) return;
-        await db.delete("products", b.dataset.del);
-        await logActivity("DELETE", "product", `Deleted ${b.dataset.del}`);
-        await reload(["products", "activityLog"]);
+        const id = b.dataset.del;
+        const childStores = [
+          ["variants", "productId"],
+          ["batches", "productId"],
+          ["inventory", "productId"],
+        ];
+        for (const [store, key] of childStores) {
+          const toDelete = get(store).filter((r) => r[key] === id);
+          for (const r of toDelete) await db.delete(store, r.id);
+        }
+        await db.delete("products", id);
+        await logActivity("DELETE", "product", `Deleted ${id}`);
+        await reload(["products", "variants", "batches", "inventory", "activityLog"]);
         UI.toast(t("deleted"));
         render();
       }),

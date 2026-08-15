@@ -11,7 +11,7 @@ import { esc, money, num, todayISO } from "../utils/format.js";
 import * as UI from "../components/ui.js";
 import { nextSKU, applyStockChange } from "./domain.js";
 import { buildMatrix, bulkFill, fillEmptyBarcodes, generateBarcode, parseValues, priceFromMargin, variantStock } from "./variants.js";
-import { broadcastChange } from "./network.js";
+import { broadcastSync } from "./network.js";
 
 const MARGINS = [0, 10, 20, 30, 50];
 
@@ -109,8 +109,12 @@ export function openProductModal(product, done = () => {}) {
           ${UI.field({ label: t("min_stock"), name: "minimumStock", type: "number", value: draft.minimumStock, attrs: 'min="0"' })}
           ${UI.field({ label: t("shelf_location"), name: "shelfLocation", value: draft.shelfLocation })}
           ${UI.textareaField({ label: t("description"), name: "descriptionAr", value: draft.descriptionAr })}
-          <div class="field full"><label for="f_img">${t("image")}</label>
-            <input class="input" id="f_img" type="file" accept="image/*">
+          <div class="field full"><label>${t("image")}</label>
+            <div class="file-upload">
+              <label class="btn" for="f_img">📷 ${t("choose_file")}</label>
+              <input class="input" id="f_img" type="file" accept="image/*" hidden>
+              <span class="stat-hint" id="f_img_name"></span>
+            </div>
             <div id="img-prev">${draft.image ? `<img src="${draft.image}" alt="" class="img-prev">` : ""}</div></div>
         </div>
         <fieldset class="pm-fs"><legend>${t("initial_batch")}</legend>
@@ -255,6 +259,8 @@ export function openProductModal(product, done = () => {}) {
           reader.onload = () => {
             draft.image = String(reader.result);
             pane.querySelector("#img-prev").innerHTML = `<img src="${draft.image}" alt="" class="img-prev">`;
+            const nameEl = pane.querySelector("#f_img_name");
+            if (nameEl) nameEl.textContent = file.name;
           };
           reader.readAsDataURL(file);
         });
@@ -457,7 +463,13 @@ export function openProductModal(product, done = () => {}) {
 
         await logActivity(product ? "UPDATE" : "CREATE", "product", `${record.sku} — ${record.nameAr || record.nameEn}`, { id: record.id });
         await reload(["products", "variants", "batches", "inventory", "stockMovements", "activityLog"]);
-        broadcastChange("products", record);
+        broadcastSync({
+          products: [record],
+          variants: get("variants").filter((v) => v.productId === record.id),
+          batches: get("batches").filter((b) => b.productId === record.id),
+          inventory: get("inventory").filter((i) => i.productId === record.id),
+          stockMovements: get("stockMovements").filter((m) => m.productId === record.id),
+        });
         UI.closeModal();
         UI.toast(t("saved"));
         done();

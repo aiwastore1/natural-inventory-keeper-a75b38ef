@@ -264,7 +264,7 @@ Keep modules reusable and avoid one huge JavaScript file.
 
 Create:
 
-MasterPosInventoryDB
+NaturalCosmeticsDB
 
 Stores:
 
