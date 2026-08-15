@@ -1420,3 +1420,12 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+Everything works: POS terminal renders 34 product cards, cart adds lines, the 3-tab product modal (with variant matrix, bulk fill, barcode generator) opens, and the ZIP backup screen loads with JSZip available — no console errors.
+```
+Added on top of the existing app:
+
+POS terminal #/pos: product grid with stock/FEFO batch tags, live cart with qty/price editing, barcode scan field, red Return Mode with negative sums, holds, drafts (proforma/order), history reprint, auto-print toggle, and F1–F5 shortcuts.
+3-tab product modal: basic info + additional barcodes + initial batch with 0/10/20/30/50% margin presets; attributes, wholesale packs and tiered prices; variant matrix generator with option-group tags, bulk fill (تعميم), empty-barcode generation, and override warning.
+ZIP backup center #/backup (JSZip bundled locally: database.json + CSVs + images, plus restore) and LAN sync #/network (device role, discovery, sync log).
+Electron desktop: electron/main.cjs with dependency-free WebSocket server on 8080 + UDP discovery on 41234, preload.cjs bridge, and electron-builder.yml (run npm i -D electron @electron/packager then npm run electron to launch the desktop build).
+```
