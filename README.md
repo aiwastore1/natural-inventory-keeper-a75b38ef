@@ -1422,6 +1422,8 @@ npm run dev
 ```
 The `package-lock.json` pins the exact dependency versions, so your local `npm install` will match this environment exactly. The dev server will start on http://localhost:8080 — open that URL and go to the POS app (http://localhost:8080/pos/index.html).
 
+If http://localhost:8080 doesn't respond, the port is already in use on your machine — Vite then auto-selects the next free port (8081, 8082, ...). Check the terminal output for the line that starts with `Local:` to get the actual URL, or free up port 8080 and rerun `npm run dev`. To use a different port, edit `port` under `server` in `vite.config.ts`.
+
 Everything works: POS terminal renders 34 product cards, cart adds lines, the 3-tab product modal (with variant matrix, bulk fill, barcode generator) opens, and the ZIP backup screen loads with JSZip available — no console errors.
 ```
 Added on top of the existing app:
