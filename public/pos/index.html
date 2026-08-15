@@ -17,6 +17,8 @@
     <link rel="stylesheet" href="./css/forms.css" />
     <link rel="stylesheet" href="./css/tables.css" />
     <link rel="stylesheet" href="./css/dashboard.css" />
+    <link rel="stylesheet" href="./css/pos.css" />
+    <link rel="stylesheet" href="./css/product-modal.css" />
     <link rel="stylesheet" href="./css/responsive.css" />
   </head>
   <body>
@@ -24,7 +26,9 @@
     <div class="app" id="app"><div class="spinner" role="status" aria-label="Loading"></div></div>
     <div class="backdrop" id="backdrop"></div>
     <div class="modal-root" id="modal-root"></div>
+    <div id="receipt-print" aria-hidden="true"></div>
     <div class="toasts" id="toasts" aria-live="polite"></div>
+    <script src="./js/jszip.min.js"></script>
     <script type="module" src="./js/app.js"></script>
   </body>
 </html>
