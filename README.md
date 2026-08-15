@@ -1420,6 +1420,8 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+The `package-lock.json` pins the exact dependency versions, so your local `npm install` will match this environment exactly. The dev server will start on http://localhost:8080 — open that URL and go to the POS app (http://localhost:8080/pos/index.html).
+
 Everything works: POS terminal renders 34 product cards, cart adds lines, the 3-tab product modal (with variant matrix, bulk fill, barcode generator) opens, and the ZIP backup screen loads with JSZip available — no console errors.
 ```
 Added on top of the existing app:
