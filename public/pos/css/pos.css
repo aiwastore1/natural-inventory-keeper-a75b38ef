@@ -1,0 +1,57 @@
+/* POS terminal */
+.pos-wrap { display: flex; flex-direction: column; gap: 12px; }
+.pos-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pos-top .search { flex: 1 1 220px; }
+.pos-wrap.return-mode { outline: 3px solid var(--danger, #dc2626); outline-offset: 4px; border-radius: 14px; }
+.btn.solid, .btn-danger.solid { background: #dc2626; color: #fff; border-color: #dc2626; font-weight: 700; }
+.pos-body { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 14px; align-items: start; }
+.pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.pos-card { display: flex; flex-direction: column; gap: 4px; text-align: start; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.pos-card:hover { border-color: var(--primary); }
+.pos-card[disabled] { opacity: 0.45; cursor: not-allowed; }
+.pos-card-name { font-weight: 600; font-size: 0.9rem; }
+.pos-card-meta { font-size: 0.72rem; color: var(--text-muted); }
+.pos-card-row { display: flex; justify-content: space-between; align-items: center; }
+.pos-price { font-weight: 700; color: var(--primary); }
+.pos-batch { display: inline-block; font-size: 0.66rem; padding: 1px 6px; border-radius: 999px; background: var(--surface-2, #f1f5f9); color: var(--text-muted); }
+.pos-batch.warning { background: #fef3c7; color: #92400e; }
+.pos-batch.danger { background: #fee2e2; color: #991b1b; }
+.pos-cart { position: sticky; top: 8px; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.pos-cart-head { display: flex; gap: 8px; align-items: center; }
+.pos-lines { max-height: 40vh; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.pos-line { display: grid; grid-template-columns: 1fr auto 82px auto auto; gap: 6px; align-items: center; padding: 6px; border-radius: 10px; background: var(--surface-2, #f8fafc); }
+.pos-line-main { min-width: 0; display: flex; flex-direction: column; }
+.qty-mod { display: flex; align-items: center; gap: 2px; }
+.qty-input { width: 52px; text-align: center; padding: 4px; }
+.price-input { padding: 4px; }
+.pos-line-total { font-weight: 700; font-size: 0.85rem; }
+.pos-line-total.neg, .pos-sums .neg strong { color: #dc2626; }
+.pos-sums { display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--border); padding-top: 8px; }
+.pos-sums .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pos-sums .row input { max-width: 120px; }
+.pos-sums .grand { font-size: 1.1rem; }
+.pos-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.pos-exec { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.pos-exec .btn-lg { grid-column: 1 / -1; padding: 14px; font-size: 1.05rem; font-weight: 800; }
+.variant-pick { display: flex; flex-direction: column; gap: 6px; }
+
+/* receipt printing */
+#receipt-print { display: none; }
+.receipt { font-family: monospace; width: 100%; max-width: 320px; margin: 0 auto; }
+.receipt h2 { text-align: center; margin: 0 0 4px; }
+.receipt .r-sub { text-align: center; font-size: 0.75rem; }
+.receipt table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.75rem; }
+.receipt th, .receipt td { border-bottom: 1px dashed #999; padding: 3px 2px; text-align: start; }
+.receipt .r-tot { display: flex; justify-content: space-between; font-size: 0.8rem; }
+.receipt .r-tot.grand { font-weight: 800; font-size: 1rem; border-top: 1px solid #000; margin-top: 4px; }
+.receipt .r-foot { text-align: center; margin-top: 10px; font-size: 0.72rem; }
+
+@media print {
+  body.printing > *:not(#receipt-print) { display: none !important; }
+  body.printing #receipt-print { display: block !important; }
+}
+
+@media (max-width: 1024px) {
+  .pos-body { grid-template-columns: 1fr; }
+  .pos-cart { position: static; }
+}
