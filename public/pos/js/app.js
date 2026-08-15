@@ -8,16 +8,20 @@ import * as V from "./modules/views.js";
 import { runExpiryScan } from "./modules/domain.js";
 import { esc, debounce } from "./utils/format.js";
 import * as UI from "./components/ui.js";
+import { pos, bindShortcuts } from "./modules/pos.js";
+import { backup } from "./modules/backup.js";
+import { network, initSync } from "./modules/network.js";
+import { openProductModal } from "./modules/product-modal.js";
 
 const NAV = [
   { group: "nav_main", items: [["/dashboard", "dashboard", "🏠"], ["/analytics", "analytics", "📈"], ["/reports", "reports", "📄"]] },
   { group: "nav_catalog", items: [["/products", "products", "🧴"], ["/categories", "categories", "🏷"], ["/inventory", "inventory", "📦"], ["/batches", "batches", "🧪"]] },
-  { group: "nav_operations", items: [["/purchases", "purchases", "🚚"], ["/sales", "sales", "🧾"], ["/movements", "movements", "🔁"], ["/expiry", "expiry", "⏳"]] },
+  { group: "nav_operations", items: [["/pos", "pos", "🧮"], ["/purchases", "purchases", "🚚"], ["/sales", "sales", "🧾"], ["/movements", "movements", "🔁"], ["/expiry", "expiry", "⏳"]] },
   { group: "nav_insights", items: [["/suppliers", "suppliers", "🏭"], ["/customers", "customers", "👥"]] },
-  { group: "nav_system", items: [["/notifications", "notifications", "🔔"], ["/activity", "activity", "🗂"], ["/settings", "settings", "⚙️"]] },
+  { group: "nav_system", items: [["/backup", "backup", "🗜"], ["/network", "network", "📡"], ["/notifications", "notifications", "🔔"], ["/activity", "activity", "🗂"], ["/settings", "settings", "⚙️"]] },
 ];
 
-const MOBILE_NAV = [["/dashboard", "dashboard", "🏠"], ["/products", "products", "🧴"], ["/sales", "sales", "🧾"], ["/inventory", "inventory", "📦"], ["/settings", "settings", "⚙️"]];
+const MOBILE_NAV = [["/dashboard", "dashboard", "🏠"], ["/pos", "pos", "🧮"], ["/products", "products", "🧴"], ["/sales", "sales", "🧾"], ["/inventory", "inventory", "📦"], ["/settings", "settings", "⚙️"]];
 
 function applyTheme() {
   const pref = state.settings.theme || "system";
@@ -126,11 +130,16 @@ function wireGlobalDelegates() {
     }
   });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+  bindShortcuts();
+  initSync();
   window.addEventListener("online", () => UI.toast(t("offline_ready")));
 }
 
 function registerRoutes() {
   router.register("/dashboard", V.dashboard);
+  router.register("/pos", pos);
+  router.register("/backup", backup);
+  router.register("/network", network);
   router.register("/products", V.products);
   router.register("/categories", V.categories);
   router.register("/inventory", V.inventory);

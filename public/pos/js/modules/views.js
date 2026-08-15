@@ -6,6 +6,7 @@ import { money, num, pct, esc, fmtDate, fmtDateTime, daysUntil, sum, debounce, d
 import { exportCSV, parseCSV, readFileText, readFileDataURL } from "../utils/csv.js";
 import { lineChart, barChart, donutChart, hBarChart, legendHTML, PALETTE } from "../utils/charts.js";
 import * as UI from "../components/ui.js";
+import { openProductModal } from "./product-modal.js";
 import {
   stockStatus,
   STATUS_META,
@@ -216,12 +217,12 @@ export async function products(route, view) {
         render();
       }),
     );
-    view.querySelector("[data-add]").addEventListener("click", () => productForm(null, render));
+    view.querySelector("[data-add]").addEventListener("click", () => openProductModal(null, render));
     view.querySelector("[data-export]").addEventListener("click", () =>
       exportCSV("products.csv", get("products").map((p) => ({ ...p, category: localName(byId("categories", p.categoryId)) }))),
     );
     view.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => navigate(`/products/${b.dataset.view}`)));
-    view.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => productForm(byId("products", b.dataset.edit), render)));
+    view.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => openProductModal(byId("products", b.dataset.edit), render)));
     view.querySelectorAll("[data-del]").forEach((b) =>
       b.addEventListener("click", async () => {
         if (!(await UI.confirmDialog({ message: t("delete_warning") }))) return;
@@ -251,7 +252,7 @@ export async function products(route, view) {
   render();
 }
 
-function productForm(product, done) {
+function openProductModal(product, done) {
   const cats = get("categories");
   const brands = get("brands");
   const sups = get("suppliers");
