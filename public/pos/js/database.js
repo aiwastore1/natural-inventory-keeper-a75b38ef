@@ -4,10 +4,10 @@
  */
 
 export const DB_NAME = "MasterPosInventoryDB";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 export const STORES = {
-  products: { keyPath: "id", indexes: ["sku", "barcode", "categoryId", "supplierId", "status", "brandId"] },
+  products: { keyPath: "id", indexes: ["sku", "barcode", "categoryId", "supplierId", "status", "brandId", "family"] },
   categories: { keyPath: "id", indexes: ["nameEn"] },
   brands: { keyPath: "id", indexes: ["nameEn"] },
   suppliers: { keyPath: "id", indexes: ["name", "status"] },
@@ -22,6 +22,12 @@ export const STORES = {
   notifications: { keyPath: "id", indexes: ["type", "read", "createdAt"] },
   settings: { keyPath: "key" },
   activityLog: { keyPath: "id", indexes: ["createdAt", "entity"] },
+  // v2 — POS terminal, variants and LAN sync
+  variants: { keyPath: "id", indexes: ["productId", "barcode", "active"] },
+  holds: { keyPath: "id", indexes: ["createdAt"] },
+  drafts: { keyPath: "id", indexes: ["type", "createdAt", "number"] },
+  returns: { keyPath: "id", indexes: ["returnNumber", "createdAt", "saleId"] },
+  syncLog: { keyPath: "id", indexes: ["createdAt", "direction"] },
 };
 
 let dbPromise = null;
