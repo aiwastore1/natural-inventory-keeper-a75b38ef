@@ -11,7 +11,6 @@ import * as UI from "./components/ui.js";
 import { pos, bindShortcuts } from "./modules/pos.js";
 import { backup } from "./modules/backup.js";
 import { network, initSync } from "./modules/network.js";
-import { openProductModal } from "./modules/product-modal.js";
 
 const NAV = [
   { group: "nav_main", items: [["/dashboard", "dashboard", "🏠"], ["/analytics", "analytics", "📈"], ["/reports", "reports", "📄"]] },
