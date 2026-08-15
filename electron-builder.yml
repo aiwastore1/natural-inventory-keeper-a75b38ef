@@ -1,0 +1,13 @@
+appId: com.naturalcosmetics.pos
+productName: Natural Cosmetics POS
+files:
+  - electron/**
+  - public/pos/**
+directories:
+  output: electron-release
+win:
+  target: portable
+linux:
+  target: tar.gz
+mac:
+  target: zip
