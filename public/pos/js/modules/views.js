@@ -252,7 +252,7 @@ export async function products(route, view) {
   render();
 }
 
-function openProductModal(product, done) {
+function legacyProductForm(product, done) {
   const cats = get("categories");
   const brands = get("brands");
   const sups = get("suppliers");
