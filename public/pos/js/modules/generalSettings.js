@@ -86,12 +86,9 @@ export async function generalSettings(route, view) {
         })}
         ${UI.card({
           title: t("language_settings"),
-          body: `${UI.selectField({
-            label: t("language"),
-            name: "uiLanguage",
-            options: LANGS.map((l) => `<option value="${l.code}" ${s.language === l.code ? "selected" : ""}>${l.label}</option>`).join(""),
-            attrs: 'id="ui-lang"',
-          })}<p class="hint">${t("language_hint")}</p>`,
+          body: `<label class="field"><span class="label">${t("language")}</span>
+            <select class="select" id="ui-lang" name="uiLanguage">${LANGS.map((l) => `<option value="${l.code}" ${s.language === l.code ? "selected" : ""}>${l.label}</option>`).join("")}</select>
+          </label><p class="hint">${t("language_hint")}</p>`,
         })}
         ${UI.card({
           title: t("expense_categories"),
