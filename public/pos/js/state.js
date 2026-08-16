@@ -16,6 +16,42 @@ export const DEFAULT_SETTINGS = {
   lowStockAlerts: true,
   expiryAlerts: true,
   salesAlerts: true,
+  // v3 — store information (legal invoice fields)
+  storeDescription: "",
+  storeAddress: "",
+  storeLandline: "",
+  storeMobile: "",
+  storeRC: "",
+  storeEmail: "",
+  storeNIF: "",
+  storeAI: "",
+  storeNIS: "",
+  storeLogo: "",
+  vatRate: 0,
+  // v3 — POS behavior
+  posQuickSale: true,
+  posAccountingOnly: false,
+  posAllowNegativeStock: false,
+  posConfirmNegativeSale: true,
+  posWeightedAveragePricing: false,
+  stampDutyEnabled: false,
+  stampDutyMin: 5,
+  stampDutyMax: 2500,
+  stampDutyTiers: [
+    { upTo: 30000, rate: 1 },
+    { upTo: 100000, rate: 1.5 },
+    { upTo: null, rate: 2 },
+  ],
+  enforceCashSession: true,
+  // v3 — electronic scale barcode parsing
+  scaleEnabled: false,
+  scalePrefix: "2",
+  scalePluDigits: 5,
+  scaleValueDigits: 5,
+  scaleValueType: "weight",
+  scaleDecimals: 3,
+  cashDrawerConnection: "printer",
+  lastBackupTimestamp: "",
 };
 
 export const state = {
