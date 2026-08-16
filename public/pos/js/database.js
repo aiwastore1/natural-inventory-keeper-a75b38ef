@@ -4,7 +4,7 @@
  */
 
 export const DB_NAME = "NaturalCosmeticsDB";
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export const STORES = {
   products: { keyPath: "id", indexes: ["sku", "barcode", "categoryId", "supplierId", "status", "brandId", "family"] },
@@ -28,6 +28,12 @@ export const STORES = {
   drafts: { keyPath: "id", indexes: ["type", "createdAt", "number"] },
   returns: { keyPath: "id", indexes: ["returnNumber", "createdAt", "saleId"] },
   syncLog: { keyPath: "id", indexes: ["createdAt", "direction"] },
+  // v3 — accounts, cash register sessions, expenses, stock debts
+  users: { keyPath: "id", indexes: ["username"] },
+  cashSessions: { keyPath: "id", indexes: ["userId", "status", "openedAt"] },
+  cashTransactions: { keyPath: "id", indexes: ["sessionId", "type", "timestamp"] },
+  expenseCategories: { keyPath: "id", indexes: ["name"] },
+  stockDebts: { keyPath: "id", indexes: ["productId", "status", "createdAt"] },
 };
 
 let dbPromise = null;
