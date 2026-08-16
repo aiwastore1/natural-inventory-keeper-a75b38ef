@@ -11,16 +11,21 @@ import * as UI from "./components/ui.js";
 import { pos, bindShortcuts } from "./modules/pos.js";
 import { backup } from "./modules/backup.js";
 import { network, initSync } from "./modules/network.js";
+import { settingsShell } from "./modules/settings-tabs.js";
+import { cashRegister } from "./modules/cashRegister.js";
+import { importExport } from "./modules/importExport.js";
+import { ensureDefaultUser } from "./modules/accountSettings.js";
+import { ensureExpenseCategories } from "./modules/generalSettings.js";
 
 const NAV = [
   { group: "nav_main", items: [["/dashboard", "dashboard", "🏠"], ["/analytics", "analytics", "📈"], ["/reports", "reports", "📄"]] },
   { group: "nav_catalog", items: [["/products", "products", "🧴"], ["/categories", "categories", "🏷"], ["/inventory", "inventory", "📦"], ["/batches", "batches", "🧪"]] },
-  { group: "nav_operations", items: [["/pos", "pos", "🧮"], ["/purchases", "purchases", "🚚"], ["/sales", "sales", "🧾"], ["/movements", "movements", "🔁"], ["/expiry", "expiry", "⏳"]] },
+  { group: "nav_operations", items: [["/pos", "pos", "🧮"], ["/cash-register", "cash_register", "💰"], ["/purchases", "purchases", "🚚"], ["/sales", "sales", "🧾"], ["/movements", "movements", "🔁"], ["/expiry", "expiry", "⏳"]] },
   { group: "nav_insights", items: [["/suppliers", "suppliers", "🏭"], ["/customers", "customers", "👥"]] },
-  { group: "nav_system", items: [["/backup", "backup", "🗜"], ["/network", "network", "📡"], ["/notifications", "notifications", "🔔"], ["/activity", "activity", "🗂"], ["/settings", "settings", "⚙️"]] },
+  { group: "nav_system", items: [["/backup", "backup", "🗜"], ["/data", "import_export", "📊"], ["/network", "network", "📡"], ["/notifications", "notifications", "🔔"], ["/activity", "activity", "🗂"], ["/settings", "settings", "⚙️"]] },
 ];
 
-const MOBILE_NAV = [["/dashboard", "dashboard", "🏠"], ["/pos", "pos", "🧮"], ["/products", "products", "🧴"], ["/sales", "sales", "🧾"], ["/inventory", "inventory", "📦"], ["/settings", "settings", "⚙️"]];
+const MOBILE_NAV = [["/dashboard", "dashboard", "🏠"], ["/pos", "pos", "🧮"], ["/cash-register", "cash_register", "💰"], ["/products", "products", "🧴"], ["/sales", "sales", "🧾"], ["/inventory", "inventory", "📦"], ["/settings", "settings", "⚙️"]];
 
 function applyTheme() {
   const pref = state.settings.theme || "system";
@@ -129,6 +134,10 @@ function wireGlobalDelegates() {
     }
   });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+  window.addEventListener("app:language", () => {
+    renderShell();
+    router.resolve();
+  });
   bindShortcuts();
   initSync();
   window.addEventListener("online", () => UI.toast(t("offline_ready")));
@@ -153,7 +162,9 @@ function registerRoutes() {
   router.register("/analytics", V.analytics);
   router.register("/notifications", V.notifications);
   router.register("/activity", V.activity);
-  router.register("/settings", V.settings);
+  router.register("/settings", settingsShell);
+  router.register("/cash-register", cashRegister);
+  router.register("/data", importExport);
   router.setNotFound((route, view) => {
     view.innerHTML = `<div class="card"><div class="card-body">${UI.emptyState("404", route.raw, "🧭")}</div></div>`;
   });
@@ -164,6 +175,8 @@ async function boot() {
     await openDB();
     await ensureSeeded();
     await loadAll();
+    await ensureDefaultUser();
+    await ensureExpenseCategories();
     setLang(state.settings.language || "ar");
     applyTheme();
     registerRoutes();
