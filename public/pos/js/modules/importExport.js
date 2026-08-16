@@ -11,7 +11,7 @@ import { t } from "../i18n.js";
 import { esc, fmtDateTime, num, todayISO, money } from "../utils/format.js";
 import * as UI from "../components/ui.js";
 import { downloadXlsx, readXlsx, rowsToObjects } from "../utils/xlsx.js";
-import { createZipBackup, restoreFromFile } from "./backup.js";
+import { createZipBackup, restoreZipBackup } from "./backup.js";
 
 const PRODUCT_HEADERS = ["barcode", "sku", "name_ar", "name_en", "name_fr", "category", "cost_price", "selling_price", "quantity", "min_stock", "expiry_date", "unit"];
 const SUPPLIER_HEADERS = ["name", "contact", "phone", "email", "address", "status"];
@@ -262,7 +262,13 @@ export async function importExport(route, view) {
       const confirmed = await confirmTyped(t("restore"), t("restore_destructive_warning"), "RESTORE");
       if (!confirmed) return;
       try {
-        await restoreFromFile(file);
+        if (/\.zip$/i.test(file.name)) await restoreZipBackup(file);
+        else {
+          const dump = JSON.parse(await file.text());
+          if (!dump.stores) throw new Error(t("invalid_backup"));
+          await db.importAll(dump);
+          await reload(Object.keys(dump.stores));
+        }
         UI.toast(t("restored"));
         render();
       } catch (error) {
